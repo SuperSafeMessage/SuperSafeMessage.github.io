@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Super Safe Message</title>
+</head>
+
+<body>
+    <style>
+        .receiver-panel,
+        .sender-panel {
+            display: none;
+        }
+    </style>
+    <h1>SuperSafeMessage</h1>
+    <div class="receiver-panel">
+        <a href="">Wait...</a>
+        <p>Share above link and wait for message</p>
+        <p>Don't close this page or you will never receive the message from the link.</p>
+        <button id="refresh-btn">Refresh Received Message</button>
+        <h2>Received Message:</h2>
+        <div id="messages"></div>
+    </div>
+    <div class="sender-panel">
+        <input type="text" />
+        <button id="send-btn">Send</button>
+        <p id="send-status"></p>
+    </div>
+    <script>
+        const host = "https://summer-salad-6492.maggch.workers.dev/"
+
+        async function receive(receiver) {
+            const api = new URL(host + "receive");
+            api.searchParams.set("receiver", receiver);
+            return fetch(api);
+        }
+
+        async function send(receiver, message) {
+            const api = new URL(host + "send");
+            api.searchParams.set("receiver", receiver);
+            api.searchParams.set("message", message);
+            return (await fetch(api));
+        }
+
+        // Generate RSA key pair
+        async function generateRSAKeyPair() {
+            const { publicKey, privateKey } = await window.crypto.subtle.generateKey(
+                {
+                    name: 'RSA-OAEP',
+                    modulusLength: 2048,
+                    publicExponent: new Uint8Array([1, 0, 1]),
+                    hash: { name: 'SHA-256' },
+                },
+                true,
+                ['encrypt', 'decrypt']
+            );
+            return { publicKey, privateKey };
+        }
+
+        async function publicKeyToBase64(publicKey) {
+            const exportedPublicKey = await window.crypto.subtle.exportKey(
+                'spki',
+                publicKey
+            );
+            return arrayBufferToBase64(exportedPublicKey);
+        }
+
+        async function importRSAKeyPair(publicKeyBase64) {
+            let publicKey;
+            // Convert the Base64-encoded public key to a binary format
+            const publicKeyBinary = atob(publicKeyBase64);
+
+            // Convert the binary data to an ArrayBuffer
+            const publicKeyBuffer = new ArrayBuffer(publicKeyBinary.length);
+            const publicKeyArray = new Uint8Array(publicKeyBuffer);
+            for (let i = 0; i < publicKeyBinary.length; i++) {
+                publicKeyArray[i] = publicKeyBinary.charCodeAt(i);
+            }
+
+            // Import the public key using SubtleCrypto.importKey
+            publicKey = await window.crypto.subtle.importKey(
+                'spki',
+                publicKeyBuffer,
+                {
+                    name: 'RSA-OAEP',
+                    hash: { name: 'SHA-256' },
+                },
+                true,
+                ['encrypt']
+            );
+
+            return publicKey
+        }
+
+        // Convert an ArrayBuffer to a Base64 string
+        function arrayBufferToBase64(buffer) {
+            const binary = String.fromCharCode(...new Uint8Array(buffer));
+            return btoa(binary);
+        }
+
+        // Convert an ArrayBuffer to a string
+        function arrayBufferToString(buffer) {
+            const decoder = new TextDecoder();
+            return decoder.decode(buffer);
+        }
+
+        // Convert a string to an ArrayBuffer
+        function stringToArrayBuffer(str) {
+            const encoder = new TextEncoder();
+            return encoder.encode(str);
+        }
+
+        // Convert a Base64 string to an ArrayBuffer
+        function base64ToArrayBuffer(base64) {
+            const binary = atob(base64);
+            const buffer = new ArrayBuffer(binary.length);
+            const bufferView = new Uint8Array(buffer);
+            for (let i = 0; i < binary.length; i++) {
+                bufferView[i] = binary.charCodeAt(i);
+            }
+            return buffer;
+        }
+
+        // Encrypt a string using RSA-OAEP with the public key and return the result as a Base64 string
+        async function encryptWithPublicKey(publicKey, plaintext) {
+            const encodedPlaintext = stringToArrayBuffer(plaintext);
+            const encrypted = await window.crypto.subtle.encrypt(
+                {
+                    name: 'RSA-OAEP',
+                },
+                publicKey,
+                encodedPlaintext
+            );
+            const encryptedBase64 = arrayBufferToBase64(encrypted);
+            return encryptedBase64;
+        }
+
+        // Decrypt a Base64 string using RSA-OAEP with the private key and return the result as a string
+        async function decryptWithPrivateKey(privateKey, ciphertextBase64) {
+            const ciphertext = base64ToArrayBuffer(ciphertextBase64);
+            const decrypted = await window.crypto.subtle.decrypt(
+                {
+                    name: 'RSA-OAEP',
+                },
+                privateKey,
+                ciphertext
+            );
+            const decryptedString = arrayBufferToString(decrypted);
+            return decryptedString;
+        }
+
+
+        (async () => {
+            const url = new URL(window.location.href)
+            const receiver = url.searchParams.get("receiver");
+            let isSender = false;
+            if (receiver) {
+                isSender = true;
+            }
+
+            if (isSender) {
+                document.querySelector('.sender-panel').style.display = "block"
+                let publicKey = await importRSAKeyPair(receiver);
+                document.querySelector('#send-btn').onclick = async () => {
+                    document.querySelector("#send-status").innerHTML = "Sending..."
+                    try {
+                        if (await (await send(receiver, await encryptWithPublicKey(publicKey, document.querySelector("input").value))).text() == 'ok') {
+                            document.querySelector("#send-status").innerHTML = "Success"
+                        } else {
+                            document.querySelector("#send-status").innerHTML = "Error"
+                        }
+                    } catch (e) {
+                        document.querySelector("#send-status").innerHTML = "Failed"
+                    }
+                }
+
+            } else {
+                document.querySelector('.receiver-panel').style.display = "block"
+                const { publicKey, privateKey } = await generateRSAKeyPair();
+                let receiver = await publicKeyToBase64(publicKey);
+
+                const link = new URL(window.location.href);
+                link.searchParams.set("receiver", receiver);
+                document.querySelector('a').href = link;
+                document.querySelector('a').innerHTML = link;
+                const refresh = async () => {
+                    let messages = await (await receive(receiver)).json();
+                    document.querySelector("#messages").innerHTML = ""
+                    messages.forEach(async msg => {
+                        let p = document.createElement('p');
+                        p.innerText = await decryptWithPrivateKey(privateKey, msg);
+                        document.querySelector("#messages").appendChild(p);
+                    });
+                };
+                setInterval(refresh, 60000);
+                document.querySelector("#refresh-btn").onclick = refresh;
+            }
+        })();
+    </script>
+</body>
+
+</html>
