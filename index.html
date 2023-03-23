@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>超级安全消息传递</title>
+    <title>超级安全的消息传递</title>
 </head>
 
 <body>
@@ -18,13 +18,13 @@
         <a href="">请稍等...</a>
         <p>将此链接发给需要互相传递信息的人，然后等待对方发送消息</p>
         <p>请暂时不要关闭这个页面，不然你将收不到对方发来的消息.</p>
-        <button id="refresh-btn">手动刷新接受(对方发送)的信息</button>
+        <button id="refresh-btn">手动刷新接收(对方发送的)信息</button>
         <h2>接收的信息如下:</h2>
         <div id="messages"></div>
     </div>
     <div class="sender-panel">
         <input type="text" />
-        <button id="send-btn">Send</button>
+        <button id="send-btn">发送</button>
         <p id="send-status"></p>
     </div>
     <script>
@@ -166,12 +166,12 @@
                     document.querySelector("#send-status").innerHTML = "Sending..."
                     try {
                         if (await (await send(receiver, await encryptWithPublicKey(publicKey, document.querySelector("input").value))).text() == 'ok') {
-                            document.querySelector("#send-status").innerHTML = "Success"
+                            document.querySelector("#send-status").innerHTML = "成功"
                         } else {
-                            document.querySelector("#send-status").innerHTML = "Error"
+                            document.querySelector("#send-status").innerHTML = "错误"
                         }
                     } catch (e) {
-                        document.querySelector("#send-status").innerHTML = "Failed"
+                        document.querySelector("#send-status").innerHTML = "失败了"
                     }
                 }
 
