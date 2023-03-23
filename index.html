@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Super Safe Message</title>
+    <title>超级安全的信息传递</title>
 </head>
 
 <body>
@@ -13,38 +13,37 @@
             display: none;
         }
     </style>
-    <h1>Super Safe Message</h1>
+    <h1>超级安全的信息传递</h1>
     <div class="receiver-panel">
-        <a href="">Wait...</a>
-        <p>Share above link and wait for message</p>
-        <p>Don't close/refresh this page or you will never receive the message from the link.</p>
-        <button id="refresh-btn">Refresh Received Message</button>
-        <h2>Received Message:</h2>
+        <a href="">请稍等...</a>
+        <p>将此链接分享给需要传递消息的人，然后等待对方消息发送</p>
+        <p>不要关闭/刷新当前页面，不然你讲无法从上面的链接接收到(对方发送的)消息.</p>
+        <button id="refresh-btn">手动刷新接受到的信息</button>
+        <h2>接收到的信息:</h2>
         <div id="messages"></div>
     </div>
     <div class="sender-panel">
         <input type="text" />
-        <button id="send-btn">Send</button>
+        <button id="send-btn">发送</button>
         <p id="send-status"></p>
     </div>
-    <div>
+    <dvi>
         <br>
         <hr>
-        <h2>Safe Tips</h2>
-        <p>Use a clean and updated system, along with the latest browser, and avoid installing any third-party
-            certificates.
+        <h2>安全提示:</h2>
+        <p>使用干净和更新的系统，以及最新的浏览器，避免安装任何第三方证书。
         </p>
 
 
-        <p>Turn off all browser extensions, open the browser in private or incognito mode, read the messages, remember
-            them,
-            and then close the browser without saving any information on your device.</p>
+        <p>关闭所有浏览器扩展程序，以隐私或隐身模式打开浏览器，阅读消息，记住
+             它们，
+             然后关闭浏览器，这不在您的设备上保存任何信息。</p>
 
-        <p>Make sure to confirm that your recipients and senders are who they say they are, and double-check that the
-            links
-            you share haven't been tampered with. (This step may not be needed for most people.</p>
+        <p>确保确认您的收件人和发件人与他们所说的一样，并仔细检查
+             链接
+             您的分享未被篡改。 （这一步可能大部分人都不需要.</p>
         </div>
-    </div>
+    </dvi>
     <script>
         const host = "https://summer-salad-6492.maggch.workers.dev/"
 
@@ -184,12 +183,12 @@
                     document.querySelector("#send-status").innerHTML = "Sending..."
                     try {
                         if (await (await send(receiver, await encryptWithPublicKey(publicKey, document.querySelector("input").value))).text() == 'ok') {
-                            document.querySelector("#send-status").innerHTML = "Success"
+                            document.querySelector("#send-status").innerHTML = "发送成功"
                         } else {
-                            document.querySelector("#send-status").innerHTML = "Error"
+                            document.querySelector("#send-status").innerHTML = "发生错误"
                         }
                     } catch (e) {
-                        document.querySelector("#send-status").innerHTML = "Failed"
+                        document.querySelector("#send-status").innerHTML = "发送失败"
                     }
                 }
 
