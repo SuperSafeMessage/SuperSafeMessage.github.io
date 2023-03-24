@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Super Safe Message</title>
+    <title>超级安全信息传递</title>
 </head>
 
 <body>
@@ -11,49 +11,35 @@
 
     <a href="/zh_cn.html">中文</a>
 
-    <h1>Super Safe Message</h1>
-    <h5>World's Safest Way to Share Message</h5>
-
+    <h1>超级安全信息传递</h1>
+    <h5>世界上最安全的信息传递方式</h5>
     <div class="receiver-panel">
-        <a id="share-link" href="" target="_blank">Wait...</a>
-        <p>Share the above link and wait for messages</p>
-        <p>Don't close/refresh this page, or you will never be able to receive messages from the above link again.</p>
-        <button id="refresh-btn">Refresh Received Messages</button>
-        <h2>Received Messages:</h2>
+        <a id="share-link" href="" target="_blank">请稍等...</a>
+        <p>分享以上链接并等待消息</p>
+        <p>请勿关闭/刷新此页面，否则您将再也无法接收到来自上方链接的信息。</p>
+        <button id="refresh-btn">刷新已接收信息</button>
+        <h2>已接收的信息：</h2>
         <div id="messages"></div>
     </div>
     <div class="sender-panel">
         <input type="text" />
-        <button id="send-btn">Send</button>
+        <button id="send-btn">发送</button>
         <p id="send-status"></p>
     </div>
     <div>
         <br>
         <hr>
-        <h2>Safe Tips</h2>
-        <p>1. Use a clean and updated system, along with the latest browser, and avoid installing any third-party
-            certificates.
-        </p>
-
-
-        <p>2. Turn off all browser extensions, open the browser in private or incognito mode, read the messages,
-            remember
-            them,
-            and then close the browser without saving any information on your device.</p>
-
-        <p>3. Make sure to confirm that your recipients and senders are who they say they are, and double-check that the
-            links
-            you share haven't been tampered with. (This step may not be needed for most people.</p>
+        <h2>安全提示</h2>
+        <p>1. 使用干净且最新的系统，配合最新版本的浏览器，避免安装任何第三方证书。</p>
+        <p>2. 关闭所有浏览器扩展，以隐私或无痕模式打开浏览器，阅读信息，记住它们，然后在不将任何信息保存到设备上的情况下关闭浏览器。</p>
+        <p>3. 确认你的收件人、发件人真的是本人，并仔细检查您分享的链接是否被篡改。（大多数人可能不需要此步骤）。</p>
     </div>
-    </div>
-
     <style>
         .receiver-panel,
         .sender-panel {
             display: none;
         }
     </style>
-
     <script>
         const host = "https://summer-salad-6492.maggch.workers.dev/"
 
