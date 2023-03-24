@@ -25,7 +25,8 @@
     </div>
     <div class="sender-panel">
         <input type="text" />
-        <button id="send-btn">Send</button>
+        <button id="send-btn">Send Text</button>
+        <button id="send-image-btn">Send Image</button>
         <p id="send-status"></p>
     </div>
     <div>
@@ -53,10 +54,14 @@
         .sender-panel {
             display: none;
         }
-    </style>
 
+        .message-image {
+            display: block;
+            padding: 5px;
+        }
+    </style>
     <script>
-        const host = "https://summer-salad-6492.maggch.workers.dev/"
+        const host = "https://ssm-proxy.maggch.workers.dev/";
 
         async function receive(receiver) {
             const api = new URL(host + "receive");
@@ -67,8 +72,7 @@
         async function send(receiver, message) {
             const api = new URL(host + "send");
             api.searchParams.set("receiver", receiver);
-            api.searchParams.set("message", message);
-            return (await fetch(api));
+            return (await fetch(api, { method: 'POST', body: message }));
         }
 
         // Generate RSA key pair
@@ -123,7 +127,7 @@
 
         // Convert an ArrayBuffer to a Base64 string
         function arrayBufferToBase64(buffer) {
-            const binary = String.fromCharCode(...new Uint8Array(buffer));
+            const binary = new Uint8Array(buffer).reduce((acc, i) => acc += String.fromCharCode([i]), '');
             return btoa(binary);
         }
 
@@ -150,34 +154,108 @@
             return buffer;
         }
 
+        // Split an ArrayBuffer into chunks of a given size
+        function splitArrayBuffer(buffer, chunkSize) {
+            const chunks = [];
+            let offset = 0;
+            while (offset < buffer.byteLength) {
+                const chunk = buffer.slice(offset, offset + chunkSize);
+                chunks.push(chunk);
+                offset += chunk.byteLength;
+            }
+            return chunks;
+        }
+
+        // Concatenate multiple ArrayBuffers into a single ArrayBuffer
+        function concatArrayBuffers(...buffers) {
+            const totalLength = buffers.reduce((sum, buffer) => sum + buffer.byteLength, 0);
+            const result = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const buffer of buffers) {
+                result.set(new Uint8Array(buffer), offset);
+                offset += buffer.byteLength;
+            }
+            return result.buffer;
+        }
+
         // Encrypt a string using RSA-OAEP with the public key and return the result as a Base64 string
         async function encryptWithPublicKey(publicKey, plaintext) {
             const encodedPlaintext = stringToArrayBuffer(plaintext);
-            const encrypted = await window.crypto.subtle.encrypt(
-                {
-                    name: 'RSA-OAEP',
-                },
-                publicKey,
-                encodedPlaintext
-            );
+            const keySize = publicKey.algorithm.modulusLength / 8;
+            const chunkSize = keySize - 66; // OAEP padding is 66 bytes
+            const chunks = splitArrayBuffer(encodedPlaintext, chunkSize);
+            const encryptedChunks = [];
+            for (const chunk of chunks) {
+                const encryptedChunk = await window.crypto.subtle.encrypt(
+                    {
+                        name: 'RSA-OAEP',
+                    },
+                    publicKey,
+                    chunk
+                );
+                encryptedChunks.push(encryptedChunk);
+            }
+            const encrypted = concatArrayBuffers(...encryptedChunks);
             const encryptedBase64 = arrayBufferToBase64(encrypted);
             return encryptedBase64;
         }
 
-        // Decrypt a Base64 string using RSA-OAEP with the private key and return the result as a string
-        async function decryptWithPrivateKey(privateKey, ciphertextBase64) {
-            const ciphertext = base64ToArrayBuffer(ciphertextBase64);
-            const decrypted = await window.crypto.subtle.decrypt(
-                {
-                    name: 'RSA-OAEP',
-                },
-                privateKey,
-                ciphertext
-            );
-            const decryptedString = arrayBufferToString(decrypted);
-            return decryptedString;
+        // Decrypt a Base64-encoded string using RSA-OAEP with the private key and return the result as a string
+        async function decryptWithPrivateKey(privateKey, encryptedBase64) {
+            const encrypted = base64ToArrayBuffer(encryptedBase64);
+            const keySize = privateKey.algorithm.modulusLength / 8;
+            const chunkSize = keySize;
+            const encryptedChunks = splitArrayBuffer(encrypted, chunkSize);
+            const decryptedChunks = [];
+            for (const encryptedChunk of encryptedChunks) {
+                const decryptedChunk = await window.crypto.subtle.decrypt(
+                    {
+                        name: 'RSA-OAEP',
+                    },
+                    privateKey,
+                    encryptedChunk
+                );
+                decryptedChunks.push(decryptedChunk);
+            }
+            const decrypted = concatArrayBuffers(...decryptedChunks);
+            const decryptedText = arrayBufferToString(decrypted);
+            return decryptedText;
         }
 
+        async function sendText(receiver, publicKey, text) {
+            const status = document.querySelector("#send-status")
+            status.innerText = "Sending...";
+            if (text.length > 256 * 1024) {
+                status.innerText = "Error, message size is too big";
+                return;
+            }
+            try {
+                if (await (await send(receiver, await encryptWithPublicKey(publicKey, text))).text() == 'ok') {
+                    status.innerText = "Success";
+                } else {
+                    status.innerText = "Error";
+                }
+            } catch (e) {
+                status.innerText = "Failed";
+            }
+        }
+
+        function chooseAndSendImage(receiver, publicKey) {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "image/*";
+            input.onchange = () => {
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64Data = reader.result.split(",")[1];
+                    const imageBase64 = "data:" + file.type + ";base64," + base64Data;
+                    sendText(receiver, publicKey, imageBase64);
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        }
 
         (async () => {
             const url = new URL(window.location.href)
@@ -190,19 +268,12 @@
             if (isSender) {
                 document.querySelector('.sender-panel').style.display = "block"
                 let publicKey = await importRSAKeyPair(receiver);
-                document.querySelector('#send-btn').onclick = async () => {
-                    document.querySelector("#send-status").innerHTML = "Sending..."
-                    try {
-                        if (await (await send(receiver, await encryptWithPublicKey(publicKey, document.querySelector("input").value))).text() == 'ok') {
-                            document.querySelector("#send-status").innerHTML = "Success"
-                        } else {
-                            document.querySelector("#send-status").innerHTML = "Error"
-                        }
-                    } catch (e) {
-                        document.querySelector("#send-status").innerHTML = "Failed"
-                    }
+                document.querySelector("#send-image-btn").onclick = async () => {
+                    await chooseAndSendImage(receiver, publicKey);
                 }
-
+                document.querySelector('#send-btn').onclick = async () => {
+                    await sendText(receiver, publicKey, document.querySelector("input").value);
+                }
             } else {
                 document.querySelector('.receiver-panel').style.display = "block"
                 const { publicKey, privateKey } = await generateRSAKeyPair();
@@ -214,19 +285,29 @@
                 document.querySelector('#share-link').innerHTML = link;
                 const refresh = async () => {
                     document.querySelector("#messages").innerHTML = ""
-                    document.querySelector('#receive-status').innerText = "Receiving...";
+                    const status = document.querySelector('#receive-status');
+                    status.innerText = "Receiving...";
                     let messages;
                     try {
                         messages = await (await receive(receiver)).json();
-                        document.querySelector('#receive-status').innerText = "";
+                        status.innerText = "";
                     } catch (e) {
-                        document.querySelector('#receive-status').innerText = "Failed to receive messages.";
+                        status.innerText = "Failed to receive messages";
                         return;
                     }
-                    messages.forEach(async msg => {
-                        let p = document.createElement('p');
-                        p.innerText = await decryptWithPrivateKey(privateKey, msg);
-                        document.querySelector("#messages").appendChild(p);
+                    messages.forEach(async encryptedMsg => {
+                        // The private key is only used here
+                        const msg = await decryptWithPrivateKey(privateKey, encryptedMsg);
+                        if (msg.startsWith('data:image')) {
+                            const img = document.createElement('img');
+                            img.classList.add('message-image');
+                            img.src = msg;
+                            document.querySelector("#messages").appendChild(img);
+                        } else {
+                            const p = document.createElement('p');
+                            p.innerText = msg;
+                            document.querySelector("#messages").appendChild(p);
+                        }
                     });
                 };
                 setInterval(refresh, 60000);
