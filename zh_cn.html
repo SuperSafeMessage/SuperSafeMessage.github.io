@@ -19,6 +19,7 @@
         <p>请勿关闭/刷新此页面，否则您将再也无法接收到来自上方链接的信息。</p>
         <button id="refresh-btn">刷新已接收信息</button>
         <h2>已接收的信息：</h2>
+        <p id="receive-status"></p>
         <div id="messages"></div>
     </div>
     <div class="sender-panel">
@@ -198,8 +199,16 @@
                 document.querySelector('#share-link').href = link;
                 document.querySelector('#share-link').innerHTML = link;
                 const refresh = async () => {
-                    let messages = await (await receive(receiver)).json();
                     document.querySelector("#messages").innerHTML = ""
+                    document.querySelector('#receive-status').innerText = "接收中...";
+                    let messages;
+                    try {
+                        messages = await (await receive(receiver)).json();
+                        document.querySelector('#receive-status').innerText = "";
+                    } catch (e) {
+                        document.querySelector('#receive-status').innerText = "接收信息失败.";
+                        return;
+                    }
                     messages.forEach(async msg => {
                         let p = document.createElement('p');
                         p.innerText = await decryptWithPrivateKey(privateKey, msg);

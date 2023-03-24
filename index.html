@@ -20,6 +20,7 @@
         <p>Don't close/refresh this page, or you will never be able to receive messages from the above link again.</p>
         <button id="refresh-btn">Refresh Received Messages</button>
         <h2>Received Messages:</h2>
+        <p id="receive-status"></p>
         <div id="messages"></div>
     </div>
     <div class="sender-panel">
@@ -212,8 +213,16 @@
                 document.querySelector('#share-link').href = link;
                 document.querySelector('#share-link').innerHTML = link;
                 const refresh = async () => {
-                    let messages = await (await receive(receiver)).json();
                     document.querySelector("#messages").innerHTML = ""
+                    document.querySelector('#receive-status').innerText = "Receiving...";
+                    let messages;
+                    try {
+                        messages = await (await receive(receiver)).json();
+                        document.querySelector('#receive-status').innerText = "";
+                    } catch (e) {
+                        document.querySelector('#receive-status').innerText = "Failed to receive messages.";
+                        return;
+                    }
                     messages.forEach(async msg => {
                         let p = document.createElement('p');
                         p.innerText = await decryptWithPrivateKey(privateKey, msg);
