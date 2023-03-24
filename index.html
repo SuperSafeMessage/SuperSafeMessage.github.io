@@ -225,12 +225,13 @@
         async function sendText(receiver, publicKey, text) {
             const status = document.querySelector("#send-status")
             status.innerText = "Sending...";
-            if (text.length > 256 * 1024) {
+            const encryptedText = await encryptWithPublicKey(publicKey, text);
+            if (encryptedText.length > 256 * 1024) {
                 status.innerText = "Error, message size is too big";
                 return;
             }
             try {
-                if (await (await send(receiver, await encryptWithPublicKey(publicKey, text))).text() == 'ok') {
+                if (await (await send(receiver, encryptedText)).text() == 'ok') {
                     status.innerText = "Success";
                 } else {
                     status.innerText = "Error";

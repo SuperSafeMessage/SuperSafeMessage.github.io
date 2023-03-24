@@ -212,12 +212,13 @@
         async function sendText(receiver, publicKey, text) {
             const status = document.querySelector("#send-status")
             status.innerText = "发送中...";
-            if (text.length > 256 * 1024) {
+            const encryptedText = await encryptWithPublicKey(publicKey, text);
+            if (encryptedText.length > 256 * 1024) {
                 status.innerText = "错误，消息过大";
                 return;
             }
             try {
-                if (await (await send(receiver, await encryptWithPublicKey(publicKey, text))).text() == 'ok') {
+                if (await (await send(receiver, encryptedText)).text() == 'ok') {
                     status.innerText = "成功";
                 } else {
                     status.innerText = "错误";
