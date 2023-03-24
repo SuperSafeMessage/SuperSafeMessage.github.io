@@ -176,15 +176,15 @@
                 document.querySelector('.sender-panel').style.display = "block"
                 let publicKey = await importRSAKeyPair(receiver);
                 document.querySelector('#send-btn').onclick = async () => {
-                    document.querySelector("#send-status").innerHTML = "Sending..."
+                    document.querySelector("#send-status").innerHTML = "发送中..."
                     try {
                         if (await (await send(receiver, await encryptWithPublicKey(publicKey, document.querySelector("input").value))).text() == 'ok') {
-                            document.querySelector("#send-status").innerHTML = "Success"
+                            document.querySelector("#send-status").innerHTML = "成功"
                         } else {
-                            document.querySelector("#send-status").innerHTML = "Error"
+                            document.querySelector("#send-status").innerHTML = "错误"
                         }
                     } catch (e) {
-                        document.querySelector("#send-status").innerHTML = "Failed"
+                        document.querySelector("#send-status").innerHTML = "失败"
                     }
                 }
 
