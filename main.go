@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"sync"
 )
@@ -45,7 +46,23 @@ func send(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	receiver := req.URL.Query()["receiver"][0]
-	message := req.URL.Query()["message"][0]
+	var message string
+	switch req.Method {
+	case "GET":
+		message = req.URL.Query()["message"][0]
+	case "POST":
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			return
+		}
+		defer req.Body.Close()
+		message = string(body)
+	}
+
+	if len(message) > 256*1024 {
+		return
+	}
+
 	addMessage(receiver, message)
 	fmt.Fprintf(w, "ok")
 }
