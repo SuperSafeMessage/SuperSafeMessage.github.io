@@ -247,13 +247,26 @@
             input.accept = "image/*";
             input.onchange = () => {
                 const file = input.files[0];
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const base64Data = reader.result.split(",")[1];
-                    const imageBase64 = "data:" + file.type + ";base64," + base64Data;
-                    sendText(receiver, publicKey, imageBase64);
+                const img = new Image();
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const maxSize = 142 * 1024;
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    let quality = 1.0;
+                    let compressedImageDataURL = '';
+                    // until the image size is smaller than maxSize
+                    while ((compressedImageDataURL == "" || compressedImageDataURL.length > maxSize) && quality >= 0) {
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        compressedImageDataURL = canvas.toDataURL('image/jpeg', quality);
+                        quality -= 0.1;
+                        canvas.width = canvas.width / 1.414;
+                        canvas.height = canvas.height / 1.414;
+                    }
+                    sendText(receiver, publicKey, compressedImageDataURL);
                 };
-                reader.readAsDataURL(file);
+                img.src = URL.createObjectURL(file);
             };
             input.click();
         }
