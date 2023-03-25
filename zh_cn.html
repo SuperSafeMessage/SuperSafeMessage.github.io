@@ -12,7 +12,7 @@
     <a href="/zh_cn.html">中文</a>
 
     <h1>超级安全信息传递</h1>
-    <h5>世界上最安全的信息传递方式</h5>
+    <h5>世界上最安全的信息传递方式: 安全传递你的密码,证件,私密照片,和一切重要的信息</h5>
     <div class="receiver-panel">
         <a id="share-link" href="" target="_blank">请稍等...</a>
         <p>分享以上链接并等待消息</p>
@@ -67,7 +67,7 @@
             const { publicKey, privateKey } = await window.crypto.subtle.generateKey(
                 {
                     name: 'RSA-OAEP',
-                    modulusLength: 2048,
+                    modulusLength: 4096,
                     publicExponent: new Uint8Array([1, 0, 1]),
                     hash: { name: 'SHA-256' },
                 },
@@ -237,7 +237,7 @@
                 const img = new Image();
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                const maxSize = 142 * 1024; 
+                const maxSize = 167 * 1024;
                 img.onload = () => {
                     canvas.width = img.width;
                     canvas.height = img.height;
