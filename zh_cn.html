@@ -23,7 +23,7 @@
         <div id="messages"></div>
     </div>
     <div class="sender-panel">
-        <input type="text" />
+        <textarea id="text-input" cols="40" rows="5"></textarea>
         <button id="send-btn">发送文本</button>
         <button id="send-image-btn">发送图片</button>
         <p id="send-status"></p>
@@ -275,7 +275,7 @@
                     await chooseAndSendImage(receiver, publicKey);
                 }
                 document.querySelector('#send-btn').onclick = async () => {
-                    await sendText(receiver, publicKey, document.querySelector("input").value);
+                    await sendText(receiver, publicKey, document.querySelector("#text-input").value);
                 }
             } else {
                 document.querySelector('.receiver-panel').style.display = "block"
