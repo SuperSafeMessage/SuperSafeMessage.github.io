@@ -61,7 +61,9 @@
         }
     </style>
     <script>
-        const host = "https://api.supersafemessage.com/";
+        const hostParam = new URL(window.location.href).searchParams.get("host");
+        const hostDefault = "https://api.supersafemessage.com/";
+        const host = hostParam || hostDefault;
 
         async function receive(receiver) {
             const api = new URL(host + "receive");
