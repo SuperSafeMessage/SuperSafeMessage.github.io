@@ -6,11 +6,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var messages sync.Map = sync.Map{}
+var lastUpdatedTimestamp int64 = 0
 
 func addMessage(receiver string, message string) {
+	lastUpdatedTimestamp = time.Now().Unix()
 	empty := &sync.Map{}
 
 	value, _ := messages.LoadOrStore(receiver, empty)
@@ -77,6 +80,16 @@ func receive(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+
+	go func() {
+		for {
+			time.Sleep(10 * time.Minute)
+			if time.Now().Unix()-lastUpdatedTimestamp > 10*60 {
+				messages = sync.Map{}
+			}
+		}
+	}()
+
 	http.HandleFunc("/receive", receive)
 	http.HandleFunc("/send", send)
 	http.ListenAndServe(":8090", nil)
