@@ -92,5 +92,5 @@ func main() {
 
 	http.HandleFunc("/receive", receive)
 	http.HandleFunc("/send", send)
-	http.ListenAndServe(":8090", nil)
+	panic(http.ListenAndServe(":8090", nil))
 }
