@@ -49,7 +49,7 @@
     </style>
     <script>
         const hostParam = new URL(window.location.href).searchParams.get("host");
-        const hostDefault = "https://api.supersafemessage.com/";
+        const hostDefault = "https://ssm-proxy.maggch.workers.dev/";
         const host = hostParam || hostDefault;
 
         async function receive(receiver) {

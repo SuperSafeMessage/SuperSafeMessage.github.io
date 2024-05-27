@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Password From Phone QR Code</title>
+    <script src="./qrcode.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="qrcode"></div>
+    <script>
+        const url = new URLSearchParams(window.location.search).get("url");
+        const qrcode = new QRCode(document.getElementById('qrcode'), {
+            text: url,
+            width: 256,
+            height: 256,
+            correctLevel: QRCode.CorrectLevel.L
+        });
+    </script>
+</body>
+
+</html>

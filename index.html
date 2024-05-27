@@ -12,10 +12,12 @@
     <a href="/zh_cn.html">中文</a>
 
     <h1>Super Safe Message</h1>
-    <h5>World's Safest Way to Share Message: Securely transfer your passwords, credentials, private photos, and all important information.</h5>
+    <h5>World's Safest Way to Share Message: Securely transfer your passwords, credentials, private photos, and all
+        important information.</h5>
 
     <div class="receiver-panel">
         <a id="share-link" href="" target="_blank">Wait...</a>
+        <iframe id="qrcode" style="width: 256px; height: 256px; border: none; display: block;"></iframe>
         <p>Share the above link and wait for messages</p>
         <p>Don't close/refresh this page, or you will never be able to receive messages from the above link again.</p>
         <button id="refresh-btn">Refresh Received Messages</button>
@@ -62,7 +64,7 @@
     </style>
     <script>
         const hostParam = new URL(window.location.href).searchParams.get("host");
-        const hostDefault = "https://api.supersafemessage.com/";
+        const hostDefault = "https://ssm-proxy.maggch.workers.dev/";
         const host = hostParam || hostDefault;
 
         async function receive(receiver) {
@@ -299,6 +301,9 @@
                 link.searchParams.set("receiver", receiver);
                 document.querySelector('#share-link').href = link;
                 document.querySelector('#share-link').innerHTML = link;
+                const qrcodeSrc = new URL('./qrcode/qrcode.html', window.location.href);
+                qrcodeSrc.searchParams.set("url", link);
+                document.querySelector('#qrcode').src = qrcodeSrc;
                 const refresh = async () => {
                     document.querySelector("#messages").innerHTML = ""
                     const status = document.querySelector('#receive-status');
